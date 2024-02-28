@@ -15,6 +15,7 @@
     2023-04-09 v. 1.0.5: Added variable 'SystemSKUNumber' (According to advice from Mike Terrill)
     2023-11-21 - GARY BLOK - Added UBR for the OS on C:\
     2023-15-12 v. 1.0.7: Various bug fixes to prevent error during TS
+    2024-02-28 - GARY BLOK - Adding MachineMatchID - a unique idea used to match devices to driver packs #MMS2024
 #>
 
 param (
@@ -254,6 +255,26 @@ function Get-UBR {
         $TSvars.Add("CDriveUBR", $UBR)
     }
 }
+function Get-MachineMatchID {
+    $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
+    $SystemSKUNumber = (Get-CimInstance -ClassName Win32_ComputerSystem).SystemSKUNumber
+    $Product = (Get-CimInstance -ClassName Win32_BaseBoard).Product
+    $BIOSFirst4 = ((Get-CimInstance -Class "Win32_Bios" -Namespace "root/cimv2").SMBIOSBIOSVersion).SubString(0, 4)
+
+    if ($Manufacturer -match "HP" -or $Manufacturer -match "Hewlett" -or $Manufacturer -match "Intel"){
+        $MachineMatchID = $Product
+    }
+    elseif ($Manufacturer -match "Dell" -or $Manufacturer -match "Microsoft"){
+        $MachineMatchID = $SystemSKUNumber
+    }
+    elseif ($Manufacturer -match "Lenovo"){
+        $MachineMatchID = $BIOSFirst4
+    }
+    else{
+        $MachineMatchID = $Product
+    }
+    $TSvars.Add("MachineMatchID", $MachineMatchID)
+}
 
 Get-ComputerSystemProductInfo
 Get-ComputerSystemInfo
@@ -268,6 +289,7 @@ Get-Architecture
 Get-Processor
 Get-Bitlocker
 Get-UBR
+Get-MachineMatchID
 
 if($Debug) {
     $TSvars.Keys | Sort-Object |% {
