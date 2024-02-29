@@ -255,24 +255,22 @@ function Get-UBR {
         $TSvars.Add("CDriveUBR", $UBR)
     }
 }
+
 function Get-MachineMatchID {
     $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
-    $SystemSKUNumber = (Get-CimInstance -ClassName Win32_ComputerSystem).SystemSKUNumber
-    $Product = (Get-CimInstance -ClassName Win32_BaseBoard).Product
-    $BIOSFirst4 = ((Get-CimInstance -Class "Win32_Bios" -Namespace "root/cimv2").SMBIOSBIOSVersion).SubString(0, 4)
-
-    if ($Manufacturer -match "HP" -or $Manufacturer -match "Hewlett" -or $Manufacturer -match "Intel"){
-        $MachineMatchID = $Product
-    }
-    elseif ($Manufacturer -match "Dell" -or $Manufacturer -match "Microsoft"){
-        $MachineMatchID = $SystemSKUNumber
+    $MachineMatchID = "Unknown" #HP, Intel, others
+    
+    if ($Manufacturer -match "Dell" -or $Manufacturer -match "Microsoft"){
+        $MachineMatchID = (Get-CimInstance -ClassName Win32_ComputerSystem).SystemSKUNumber
     }
     elseif ($Manufacturer -match "Lenovo"){
-        $MachineMatchID = $BIOSFirst4
+        $MachineMatchID = ((Get-CimInstance -Class "Win32_Bios" -Namespace "root/cimv2").SMBIOSBIOSVersion).SubString(0, 4)
     }
-    else{
-        $MachineMatchID = $Product
+    
+    if ($MachineMatchID -eq "Unknown"){
+        $MachineMatchID = (Get-CimInstance -ClassName Win32_BaseBoard).Product
     }
+    
     $TSvars.Add("MachineMatchID", $MachineMatchID)
 }
 
